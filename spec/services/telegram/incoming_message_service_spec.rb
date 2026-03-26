@@ -56,6 +56,21 @@ describe Telegram::IncomingMessageService do
       end
     end
 
+    context 'when contact is blocked' do
+      it 'does not create incoming message' do
+        blocked_contact = create(:contact, account: telegram_channel.account, blocked: true)
+        create(:contact_inbox, contact: blocked_contact, inbox: telegram_channel.inbox, source_id: message_params['from']['id'])
+        params = {
+          'update_id' => 2_342_342_343_242,
+          'message' => { 'text' => 'test' }.merge(message_params)
+        }.with_indifferent_access
+
+        expect do
+          described_class.new(inbox: telegram_channel.inbox, params: params).perform
+        end.not_to change { telegram_channel.inbox.messages.count }
+      end
+    end
+
     context 'when valid caption params' do
       it 'creates appropriate conversations, message and contacts' do
         params = {

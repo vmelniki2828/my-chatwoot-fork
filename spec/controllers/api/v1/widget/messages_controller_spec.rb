@@ -149,6 +149,18 @@ RSpec.describe '/api/v1/widget/messages', type: :request do
         expect(response).to have_http_status(:success)
         expect(conversation.reload.open?).to be(true)
       end
+
+      it 'returns forbidden when contact is blocked' do
+        conversation.contact.update!(blocked: true)
+
+        post api_v1_widget_messages_url,
+             params: { website_token: web_widget.website_token, message: { content: 'blocked message', timestamp: Time.current } },
+             headers: { 'X-Auth-Token' => token },
+             as: :json
+
+        expect(response).to have_http_status(:forbidden)
+        expect(response.parsed_body['error']).to eq('Contact is blocked')
+      end
     end
   end
 

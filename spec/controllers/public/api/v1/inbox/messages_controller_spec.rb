@@ -52,6 +52,16 @@ RSpec.describe 'Public Inbox Contact Conversation Messages API', type: :request 
       expect(conversation.messages.last.attachments.first.file.present?).to be(true)
       expect(conversation.messages.last.attachments.first.file_type).to eq('image')
     end
+
+    it 'returns forbidden when contact is blocked' do
+      contact.update!(blocked: true)
+
+      post "/public/api/v1/inboxes/#{api_channel.identifier}/contacts/#{contact_inbox.source_id}/conversations/#{conversation.display_id}/messages",
+           params: { content: 'hello' }
+
+      expect(response).to have_http_status(:forbidden)
+      expect(response.parsed_body['error']).to eq('Contact is blocked')
+    end
   end
 
   describe 'PATCH /public/api/v1/inboxes/{identifier}/contact/{source_id}/conversations/{conversation_id}/messages/{id}' do

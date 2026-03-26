@@ -6,6 +6,11 @@ class Public::Api::V1::Inboxes::MessagesController < Public::Api::V1::InboxesCon
   end
 
   def create
+    if @contact_inbox.contact.blocked?
+      render json: { error: 'Contact is blocked' }, status: :forbidden
+      return
+    end
+
     @message = @conversation.messages.new(message_params)
     build_attachment
     @message.save!

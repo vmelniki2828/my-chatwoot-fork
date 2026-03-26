@@ -78,6 +78,7 @@ class Message < ApplicationRecord
   validates :content_type, presence: true
   validates :content, length: { maximum: 150_000 }
   validates :processed_message_content, length: { maximum: 150_000 }
+  validate :prevent_blocked_contact_messages
 
   # when you have a temperory id in your frontend and want it echoed back via action cable
   attr_accessor :echo_id
@@ -277,6 +278,14 @@ class Message < ApplicationRecord
   end
 
   private
+
+  def prevent_blocked_contact_messages
+    return unless incoming?
+    return unless sender.is_a?(Contact)
+    return unless sender.blocked?
+
+    errors.add(:base, 'Blocked contact cannot send messages')
+  end
 
   def prevent_message_flooding
     # Added this to cover the validation specs in messages

@@ -16,6 +16,24 @@ RSpec.describe Message do
     it { is_expected.to validate_presence_of(:account_id) }
   end
 
+  describe 'blocked contact validation' do
+    let(:conversation) { create(:conversation) }
+    let(:blocked_contact) { conversation.contact.tap { |contact| contact.update!(blocked: true) } }
+
+    it 'does not allow incoming message from blocked contact' do
+      message = build(:message, conversation: conversation, sender: blocked_contact, message_type: :incoming)
+
+      expect(message.valid?).to be false
+      expect(message.errors[:base]).to include('Blocked contact cannot send messages')
+    end
+
+    it 'allows outgoing message even when contact is blocked' do
+      message = build(:message, conversation: conversation, sender: blocked_contact, message_type: :outgoing)
+
+      expect(message.valid?).to be true
+    end
+  end
+
   describe 'length validations' do
     let!(:message) { create(:message) }
 
